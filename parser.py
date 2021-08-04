@@ -4,6 +4,9 @@ import logging
 import pandas as pd
 from typing import Union
 import subprocess
+import os
+
+CURRENT_USER_WD = os.getcwd()
 
 # logging at level INFO
 log = logging.getLogger("xml_parse")
@@ -43,15 +46,16 @@ def parse_XML(xml_file):
 
     # running the command
     #command = output[0][0][2::]
-    for command in output:
-        command = command[0][2::]
-        print(f"Attempted command: {command}")
-        proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE) #run the command 
-        return_code = proc.wait() # wait to get return code to see if excecution was good (A None value indicates that the process hasn’t terminated yet.)
-        for line in proc.stdout:
-           pass;# print(f"stdout: {line.rstrip()}")
-
-
+    for commands in output:
+        for command in commands:
+            test_user = 'smithj'
+            if test_user in command:
+                command = command.replace(test_user, current_user)
+                print(f"Attempted command: {command}")
+                proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE) #run the command 
+                return_code = proc.wait() # wait to get return code to see if excecution was good (A None value indicates that the process hasn’t terminated yet.)
+                for line in proc.stdout:
+                    print(f"stdout: {line.rstrip()}");
 
 # create dictionary for SI_DATA
 def get_stig_info(root) -> dict['str', Union[str, bool]]:
@@ -97,7 +101,23 @@ def write_to_csv(data_frame):
 
     
 # call the file to be parsed and printed
-parse_XML ("CHECKLIST_TEMPLATE_RHEL.ckl")
+if __name__ == '__main__':
+    print(CURRENT_USER_WD)
+    
+    current_user = 'sel'
+    #uncomment when we switch to UNIX
+    current_user = CURRENT_USER_WD.split("/home/")[1]
+    try:
+        if os.geteuid()==0:
+          print("Running as root.")
+        else:
+          print("User is not root.")
+    except:
+        print("User is not running UNIX environment")
+        pass
+        
+    parse_XML ("CHECKLIST_TEMPLATE_RHEL.ckl")
+    
 
 
 # %%
